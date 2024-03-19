@@ -1,0 +1,43 @@
+version: "3"
+
+services:
+    nginx:
+        container_name: nginx
+        image: nginx:stable
+        ports:
+            - "8080:80"
+        volumes:
+            - .:/var/www/html
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            - php
+    php:
+        container_name: php
+        build: .
+        environment:
+            - PHP_IDE_CONFIG=serverName=Docker
+        volumes:
+            - .:/var/www/html
+            - ./app/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+        depends_on:
+            - pgsql
+    pgsql:
+        container_name: pgsql
+        image: postgres
+        ports:
+            - "5432:5432"
+        environment:
+            - POSTGRES_USER=course_two
+            - POSTGRES_PASSWORD=course_two
+            - POSTGRES_DB=course_two
+    meilisearch:
+        container_name: meilisearch
+        image: getmeili/meilisearch:latest
+        ports:
+            - "7700:7700"
+        volumes:
+            - ./ms:/data.ms
+        healthcheck:
+            test: [ "CMD", "wget", "--no-verbose", "--spider",  "http://localhost:7700/health" ]
+            retries: 3
+            timeout: 5s
